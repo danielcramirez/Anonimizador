@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-6">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5 class="card-title">Cargar PDF</h5>
+        {% if error %}
+        <div class="alert alert-danger" role="alert">{{ error }}</div>
+        {% endif %}
+        <form action="/analizar" method="post" enctype="multipart/form-data">
+          <div class="mb-3">
+            <label class="form-label">Archivo PDF</label>
+            <input class="form-control" type="file" name="pdf" accept=".pdf" required>
+          </div>
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" value="1" name="usar_ocr" id="usar_ocr" {% if usar_ocr %}checked{% endif %}>
+            <label class="form-check-label" for="usar_ocr">
+              Usar OCR (Tesseract) si no hay texto embebido
+            </label>
+          </div>
+          <button type="submit" class="btn btn-primary">Analizar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5 class="card-title">Anonimizar</h5>
+        <p class="text-muted mb-2">Se muestran las entidades detectadas por spaCy + reglas.</p>
+        {% if resultados %}
+          <form action="/anonimizar" method="post" class="mb-3">
+            <button class="btn btn-danger">Anonimizar PDF</button>
+          </form>
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Texto</th>
+                  <th>Tipo</th>
+                  <th>Origen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for r in resultados %}
+                <tr>
+                  <td>{{ r.value }}</td>
+                  <td>{{ r.label }}</td>
+                  <td>{{ r.origen }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-muted">Sube un PDF para ver los hallazgos.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if texto %}
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="card-title">Texto detectado</h5>
+    <pre class="bg-light p-3" style="max-height: 250px; overflow-y: auto;">{{ texto }}</pre>
+  </div>
+</div>
+{% endif %}
+
+{% if texto_anon %}
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="card-title text-success">Texto anonimizado</h5>
+    <pre class="bg-light p-3" style="max-height: 250px; overflow-y: auto;">{{ texto_anon }}</pre>
+    {% if pdf_salida %}
+      <a class="btn btn-success mt-3" href="{{ url_for('descargar', filename=pdf_salida) }}">Descargar PDF anonimizado</a>
+      {% if txt_salida %}
+      <a class="btn btn-outline-secondary mt-3 ms-2" href="{{ url_for('descargar', filename=txt_salida) }}">Descargar TXT</a>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<div class="row mt-4" id="subidos">
+  <div class="col-lg-6">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5 class="card-title">Archivos subidos</h5>
+        {% if archivos_subidos %}
+        <div class="table-responsive">
+          <table class="table table-sm table-striped align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Nombre</th>
+                <th>Tamaño (KB)</th>
+                <th>Descargar</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for f in archivos_subidos %}
+              <tr>
+                <td>{{ f.name }}</td>
+                <td>{{ f.size_kb }}</td>
+                <td><a class="btn btn-link btn-sm" href="{{ url_for('descargar', filename=f.name) }}">Descargar</a></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted">Aún no hay archivos subidos.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6" id="anonimizados">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5 class="card-title">Archivos anonimizados</h5>
+        {% if archivos_anonimizados %}
+        <div class="table-responsive">
+          <table class="table table-sm table-striped align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Nombre</th>
+                <th>Tamaño (KB)</th>
+                <th>Descargar</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for f in archivos_anonimizados %}
+              <tr>
+                <td>{{ f.name }}</td>
+                <td>{{ f.size_kb }}</td>
+                <td><a class="btn btn-link btn-sm" href="{{ url_for('descargar', filename=f.name) }}">Descargar</a></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted">Aún no hay archivos anonimizados.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
